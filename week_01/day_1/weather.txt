@@ -1,1 +1,3 @@
 today is sunny
+
+the humidity is 68% 
