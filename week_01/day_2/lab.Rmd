@@ -1,0 +1,107 @@
+---
+title: "lab_state_income"
+output: html_notebook
+---
+
+Question 1.
+
+## Load in the data, and have a look at it. How many variables does it have? How many observations? What are the variable names? What type of variables does it have?
+
+```{r}
+
+state_income_data <- read_csv("/Users/kahlen/Desktop/CodeClan/Codeclan_work/week_01/day_2/week1_day2/data/state_income_data.csv")
+
+str(state_income_data)
+
+```
+
+
+Question 2.
+
+Select the columns which contain the information from years 2002 to 2008. Ensure you keep the Index and State variables as well.
+
+```{r}
+
+get_years <- state_income_data %>% 
+  select(1:9)
+get_years
+```
+
+
+Question 3.
+
+Rename the Index column to first_letter. Hint: look up the rename() function.
+
+```{r}
+
+state_income_data2 <- rename(state_income_data, first_letter = Index)
+state_income_data2
+```
+
+
+Question 4.
+
+Find the seven states which start with an A,B, or C.
+
+```{r}
+
+seven_states <- filter(state_income_data2, first_letter %in% c("A","B","C"))
+seven_states
+```
+
+
+Question 5.
+
+Find which of these seven states have the greatest income in 2008.
+
+```{r}
+arrange(seven_states, desc(Y2008))
+```
+
+
+Question 6.
+
+Calculate the change in income for each state of these seven states (states starting with A,B, or C) between 2002 and 2008. Save the income change in a new column called income_change.
+
+```{r}
+
+seven_states <- mutate(seven_states, income_change = Y2008 - Y2002, .before = 3)
+seven_states
+```
+
+
+Question 7.
+
+Find which of these seven states income change is greater than 500,000 (i.e. an increase of 500,000 or decrease of 500,000).
+
+```{r}
+
+filter(seven_states, income_change > 500000)
+
+```
+
+
+Question 8.
+
+Calculate the mean and median income change for all seven states.
+
+```{r}
+summary(seven_states)
+```
+
+
+Question 9.
+
+Go back to the original dataset which contains all states. Write a pipe which selects the State and Y2008 variables, arranges the income from highest to lowest, filters all those states which have a income of greater than 1 million, and then finally chooses the top 10 wealthiest states.
+
+```{r}
+
+
+state_income_data2 %>% 
+  select(State,Y2008) %>% 
+  arrange(desc(Y2008)) %>% 
+  filter(Y2008 > 1000000) %>% 
+  head(10)
+
+```
+
