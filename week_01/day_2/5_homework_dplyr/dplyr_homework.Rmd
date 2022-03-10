@@ -52,6 +52,9 @@ calories_drinks <- select(drinks_content, "Beverage_category", "Beverage", "Beve
 
 filter(calories_drinks, !is.na(Calories))
 
+#group_by(beverage) %>% 
+#summarise(n_cats + n()) %>% 
+
 ```
 
 
@@ -80,6 +83,7 @@ drinks_grouped <- group_by(drinks_content, Beverage_category) %>%
   arrange(mean_calories) %>%
   arrange(desc(mean_calories))
 drinks_grouped
+  
 
 ## Smoothies, Frappuccino® Blended Coffee and Signature Espresso Drinks have the most calories; 
 ## Coffee, Shaken Iced Beverages and Classic Espresso Drinks have rthe least calories
@@ -138,6 +142,18 @@ head(Beverage_category, 1)
 head(Beverage_prep, 1)
 
 ## Tazo® Tea has the lowest calories
+
+## drink_content %>% 
+#clean_names() %>% 
+ # select(starts_with("bev")), calories) %>% 
+  #mutate(calorie_diff=calroies-135) %>% 
+  #arrange(calories) %>% 
+  #filter(beverage_category %in% non_coffee_drinks) %>% 
+ #head(1)
+#group_by(Beverage_category,Beverage_prep_grouped,Beverage_group)
+#summarise()
+  
+non_coffee_drinks <- c("Tazo® Tea", "Smoothies", "Frappuccino® Blended Crème")
 
 ```
 
