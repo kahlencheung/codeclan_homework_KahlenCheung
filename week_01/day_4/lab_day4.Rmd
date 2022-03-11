@@ -1,0 +1,145 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Q1
+
+```{r}
+some_letters <- c("E", "R", "R", "O", "R")
+```
+
+
+Q2
+
+```{r}
+message <- c("does", "this", "work", "?")
+
+toupper(message)
+```
+
+Q3
+
+```{r}
+
+library(tidyverse)
+
+mtcars %>% 
+  select(mpg, cyl, disp) %>% 
+  filter(mpg < 20) 
+  
+  
+
+```
+
+
+Q4
+
+```{r}
+
+
+iris %>% 
+  select(Sepal.Length, Sepal.Width, Species) %>% 
+  arrange(Sepal.Length)
+
+
+
+```
+
+
+Q5
+
+```{r}
+
+
+ToothGrowth %>%
+  filter(supp == "VC") %>% 
+  summarise(avg_len_vc = mean(len)) 
+
+```
+
+
+Q6
+
+```{r}
+
+animals <- c("cat", "dog", "rabbit", "horse")
+
+sample(animals, 10, replace = TRUE)
+
+```
+
+
+Q7
+
+```{r}
+
+dog_names <- c("Lucy", "Molly", "Charlie", "Luna", "Bella", "Cooper")
+
+cat_names <- c("Luna", "Lily", "Lucy", "Charlie", "Max", "Oliver")
+
+#intersect(dog_names)
+#argument "y" is missing, with no default
+
+intersect(dog_names, cat_names)
+
+
+```
+
+Q8
+```{r}
+
+chickwts %>% 
+  filter(weight <= 150) %>% 
+  mutate(weight_kg = weight * 0.001)
+
+#chickwts %>% 
+  #filter(weight <= 150) %>% 
+  #mutate(weight_kg == weight * 0.001)
+# == is a logical operator asking question, not equal
+```
+
+Q9
+```{r}
+
+tibble(alphabet = LETTERS,
+       numbers = 1:26) %>% 
+  filter(alphabet != c("A", "B","C"))
+#filter(alphabet !%n% c("A", "B","C"))
+#             is not in
+
+
+#tibble(alphabet = LETTERS(),>letter is constants, no need brackets 
+#       numbers = 1:25) %>% >26 alphabets in total
+#  filter(letter != c(A, B, C)) > take out the elements that dont match
+
+```
+
+Q10
+
+```{r}
+
+
+set.seed(999)
+
+scent_ratings <- tibble(
+  iD = rep(1:10, each = 5),
+  SCENT = rep(c("New book", "Cut grass", "Rose oil", "Fresh linen", "Wet dog"), 10),
+  rating = sample(c(0:5, NA), 50, replace = TRUE),
+  PersonAge = rep(NA, 50)
+)
+
+scent_ratings
+
+scent_ratings <- scent_ratings %>% 
+  janitor::clean_names()
+
+scent_ratings %>% 
+  drop_na(-person_age) %>% 
+  group_by(scent) %>% 
+  summarise(mean_rating = mean(rating))
+
+scent_ratings
+
+```
+
