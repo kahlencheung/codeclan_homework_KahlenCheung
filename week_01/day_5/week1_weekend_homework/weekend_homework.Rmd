@@ -42,7 +42,6 @@ book_subset <- publication_date_adjusted %>%
 
 view(book_subset)
 
-# publisher that released the most books
 
 #book's average rating and filter rows ratings_count less than 10,000 
 
@@ -100,12 +99,12 @@ tail(book_rarting)
 
 ```{r}
 
-#Find out how many items were publish in 2019 and 2020
+#Find out how many items were published in 2019 and 2020
 
 
 book_subset %>% 
   group_by(publication_date) %>% 
-  mutate(year_of_publish = select(publication_date, contains("2020") | select(publication_date,)
+  mutate(year_of_publish = select(publication_date, contains("2020") | select(publication_date)))
                           
 
 
@@ -116,7 +115,7 @@ book_subset %>%
 
 
 book_subset %>% 
-  select( str_c (publication_date = "2019"))
+  select(publication_date == startsWith("2020"))
          
 sum
 
@@ -127,7 +126,7 @@ sum
 #                   contains(publication_date, "2019") == "2019"))
 
 
-#tried to use `str_c` to distinct the years ; does the data type matter? chr/dbl
+#tried to use `startsWith` / `contains` to distinct the years ;
 
 
 
