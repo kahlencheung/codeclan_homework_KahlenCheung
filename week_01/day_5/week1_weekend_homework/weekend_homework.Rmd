@@ -30,6 +30,9 @@ typeof(publication_date_adjusted$publication_date)
 
 # time cost :1hr 50mins; 1hr on figuring how to change the type of date (or change the type of column in a data frame)
 
+#as.Date(head(book$publication_date), "%m/%d/%y"
+#lubridate::(publication_date_adjusted$publication_date)
+
 ```
 
 ## Explore data insights-creating subsets
@@ -132,5 +135,42 @@ sum
 
 ```
 
+```{r}
 
+# library(stringr)
+
+funny_thing <- c('e')
+
+book %>% 
+  count(authors, sort = TRUE)
+
+book %>% 
+cor(ratings_count)
+
+ggplot(books,aes(average_ratings, log10(num_pages), colour = publisher))
+
+```
+
+```{r}
+
+#class review
+
+#books %>% 
+# count(language_code) %>% 
+#   filter(n == 1) %>% 
+#   pull(language_code)
+
+book %>% 
+  select.list(language_code) %>% 
+  group_by(language_code) %>% 
+  summaraize(n=N())
+#n tells how many rows there are
+
+# if_else((books$language_code =="en-GB, TRUE, FALSE"))
+# books$language_code == "en-GB
+
+"
+
+
+```
 

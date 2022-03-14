@@ -1,0 +1,109 @@
+---
+title: "week2_day1_homework R Notebook"
+output: html_notebook
+---
+
+Q1. Read and clean data
+
+```{r}
+
+
+card_base
+customer_base
+fraud_base
+transaction_base
+
+
+clean_names(card_base)
+clean_names(customer_base)
+clean_names(fraud_base)
+clean_names(transaction_base)
+
+```
+
+
+Q.2 Join data set that describes cutomers details
+```{r}
+
+customers_details <- customer_base %>% 
+ inner_join(card_base, by = "Cust_ID")
+
+customers_details
+
+#Since the column `Cust_ID` is joined together, there are 7 columns after the merging.
+
+```
+
+Q.3 Join all fraud data and transaction data into one data set
+
+```{r}
+
+fraud_transaction_joined <- full_join(fraud_base, transaction_base)
+
+fraud_transaction_joined 
+
+#the new  joined table has 6 columns of variables with 10,000 rows
+
+```
+Q.4 Find the coulmn in Y that matches , and return to X
+```{r}
+customer_transaction_match <- semi_join(customers_details, fraud_transaction_joined, by = c("Card_Number" = "Credit_Card_ID"))
+
+#when the columns names are different but contains similar contents, use a vector to join
+
+```
+
+Q.5 Separtate obseravtion
+
+```{r}
+
+hat_observation
+
+hat_observation <- hat_observation %>% 
+  separate(observation, into = c("hat_colour", "hat_type"), sep = ",")
+
+#" , " returns wrong anwser 
+
+```
+Q.6 Combine as Date column
+
+```{r}
+
+hat_observation %>% 
+  unite("date", day, month, year, sep = "/")
+
+```
+#Extension
+Q1. Join 4 tables as 1
+
+```{r}
+
+all_tables_joined <-
+
+  
+card_base
+customer_base
+fraud_base
+transaction_base
+
+## unable to finish extension Q1
+
+```
+
+Q2. practice of pivot_longer and pivot_wider
+
+```{r}
+
+exam_scores
+
+exam_scores_longer <- exam_scores %>% 
+  pivot_longer(cols = starts_with("exam_Q"),
+               names_to = "exam",
+               values_to = "scores")
+
+exam_scores_wider <- exam_scores_longer %>% 
+  pivot_wider(names_from = exam,
+              values_from = scores)
+
+```
+
