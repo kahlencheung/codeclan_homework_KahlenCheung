@@ -1,0 +1,137 @@
+---
+title: "Week1_Weekend_Homework_by_Kahlen_Cheung"
+output: html_notebook
+---
+
+# Introduction
+
+This R excercise adpots functions from the package `tyidyverse` and `janitor`. The excercise focuses on the usage of data cleaning such as recoding and dealing with missing data. The dataset `book` is scraped from `Goodreads`, which is publicy available on [Kaggle](https://www.kaggle.com/jealousleopard/goodreadsbooks).
+
+## Preparartion
+Import data and inspect data structure
+```{r}
+
+book <- read_csv("/Users/kahlen/Desktop/CodeClan/codeclan_homework_KahlenCheung/week_01/day_5/data/books.csv")
+glimpse(book)
+drop_na(book)
+view(book)
+
+# Change the type of `publication_date` from chr to date(dbl) for better processing
+    
+publication_date_adjusted <- book %>% 
+  group_by(publication_date)%>% 
+  mutate(publication_date = as.Date(publication_date, "%m/%d/%y"))
+
+glimpse(publication_date_adjusted)
+
+view(publication_date_adjusted)
+
+typeof(publication_date_adjusted$publication_date)
+
+# time cost :1hr 50mins; 1hr on figuring how to change the type of date (or change the type of column in a data frame)
+
+```
+
+## Explore data insights-creating subsets
+-create a subset by selecting useful columns
+
+```{r}
+
+book_subset <- publication_date_adjusted %>% 
+  select("title", "authors", "average_rating", "ratings_count", "text_reviews_count", "publication_date", "publisher")
+
+view(book_subset)
+
+# publisher that released the most books
+
+#book's average rating and filter rows ratings_count less than 10,000 
+
+book_rarting <- book_subset %>% 
+ filter(ratings_count >= 10000, .preserve = FALSE) %>%  
+ select(average_rating, title) %>% 
+ arrange(desc(average_rating))
+
+book_rarting
+
+book_rarting%>% 
+head(5)
+
+#The top 5 books(items) that have the most average rating where the number of rating counts are equal to or more than 10,000:
+#The Complete Calvin and Hobbes, Harry Potter Boxed Set Books 1-5 (Harry Potter #1-5), It's a Magical World (Calvin and Hobbes #11), Harry Potter Collection (Harry Potter #1-6), Homicidal Psycho Jungle Cat (Calvin and Hobbes #9)
+
+book_rarting%>% 
+tail(5)
+
+#The 5 books(items) that have the least average rating where the number of rating counts are equal to or more than 10,000:
+#The Mermaid Chair, Billy Budd Sailor, The Jane Austen Book Club, Four Blondes, Lost
+
+```
+
+```{r}
+
+                                   
+book_rarting %>% 
+  select(average_rating)%>% 
+  mutate(level_of_ratings = case_when(
+                                   as.numeric(average_rating * 100) >= 420 ~ "Execellent", 
+                                   as.numeric(average_rating * 100) >= 320 ~ "Good",
+                                   as.numeric(average_rating * 100) >= 280 ~ "Fair"),
+                                   .before = 3)
+      
+    
+#the average_rating column was `double` format, times 100 to avoid decimal calculation and classification. 
+#In this case it can't be a `int` type since it will go rather upward or downward that
+#the result will be inaccurate.
+
+#wrong example:
+# 
+# book_rating %>% 
+#   as.numeric(average_rating) %>% 
+#   select(average_rating)%>% 
+#   mutate(level_of_ratings = case_when(
+#                                    average_rating >=4.2 ~ "Execellent", 
+#                                    average_rating >=3.2 && average_rating <4.2 ~ "Good",
+#                                    average_rating >=2 && average_rating <3.2 ~ "Fair"),
+#                                    .before = 3)
+
+tail(book_rarting)
+                                    
+```
+
+```{r}
+
+#Find out how many items were publish in 2019 and 2020
+
+
+book_subset %>% 
+  group_by(publication_date) %>% 
+  mutate(year_of_publish = select(publication_date, contains("2020") | select(publication_date,)
+                          
+
+
+book_subset %>% 
+  count(publication_date, "2020") 
+
+# 724 items were released in 2020
+
+
+book_subset %>% 
+  select( str_c (publication_date = "2019"))
+         
+sum
+
+# book_subset %>% 
+#   group_by(publication_date) %>% 
+#   mutate(year_of_publish = 
+#            recode(contains(publication_date, "2020") == "2020",
+#                   contains(publication_date, "2019") == "2019"))
+
+
+#tried to use `str_c` to distinct the years ; does the data type matter? chr/dbl
+
+
+
+```
+
+
+
