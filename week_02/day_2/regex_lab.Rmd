@@ -183,6 +183,27 @@ str_extract_all(whole_text_vodka, "vodka")
 ```
 
 
+or
+
+```{r}
+
+pattern <- "[,\\.-[gG][iI][nN][,\\.-]"
+
+whole_text %>% 
+  str_extract_all(pattern) %>% 
+  flatten_chr()
+
+```
+or
+
+```{r}
+
+whole_text %>% 
+  str_replace_all(c("GIN" = "VODKA", "gin" = "vodka", "Gin" = "Vodka"))
+
+```
+
+
 #Question 7.
 Big Brother is rebranding and has decided that the various ministries will now be known as departments. The old departments are now called sections. The Newspeak titles will use “Dep” instead of “Mini”.
 ###Step1: change`department` into ` section`
@@ -231,5 +252,12 @@ str_detect(whole_text_changed,"Deptrue") #TRUE
 # whole_text_changed <- whole_text_ministry %>% 
 # str_replace_all(whole_text_ministry, pattern_np, replacement = "Dep")
 # str_detect(whole_text,patter, negate = FALSE)
+```
+
+```{r}
+
+whole_text %>% 
+  str_extract_all("(?!)(Department | Ministry | Ministrie | Mini[a-z]+) ")
+
 ```
 
