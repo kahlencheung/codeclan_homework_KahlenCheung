@@ -1,0 +1,280 @@
+---
+title: "reproducibility_repelicability_R Notebook"
+output: html_notebook
+---
+
+Question 1
+
+Read in the data containing dietary compositions and familiarise yourself with it.
+```{r}
+
+library(tidyverse)
+library(here)
+
+here::here()
+
+country_codes <- read.csv(here("data/country_codes.csv"))
+
+dietary_composition <- read.csv(here("data/dietary-composition-by-country.csv"))
+
+dietary_composition <- clean_names(dietary_composition)
+
+```
+
+Question 2
+
+Change the data to long format with food categories going to a column called kcal_source and the calorie values going to a column called avg_daily_kcals. Save into variable diet_comp_clean
+```{r}
+
+library(janitor)
+library(stringr)
+library(dplyr)
+```
+Question 3
+
+Clean kcal_source categories by removing any unnecessary information. Then clean all column names, and rename the column ‘entity’ to ‘country’. Overwrite diet_comp_clean with your results. [Hint: you’ll probably have to use some regex to clean kcal_source categories]
+```{r}
+
+diet_comp_clean <- dietary_composition %>% 
+  pivot_longer( cols = ends_with("2017"),
+                names_to = "kcal_source",
+                values_to = "avg_daily_kcals"
+  )
+
+view(diet_comp_clean)
+
+```
+
+```{r}
+
+diet_comp_clean <- diet_comp_clean %>% 
+  mutate( kcal_source = str_remove_all(kcal_source, pattern = "_fao_2017")) %>% 
+  rename(country = entity)
+
+view(diet_comp_clean)
+```
+
+Question 4
+
+Check how many missing values there are in each column
+```{r}
+
+sum(is.na(diet_comp_clean))
+
+```
+
+Question 5
+
+Let’s investigate the missing values in column code further. First, check which countries are missing a code. Save these as a character vector, and use this vector to check whether you can find their code anywhere in the dataset, i.e. is the code missing for every observation for these countries.
+
+```{r}
+
+#duplicate the diet_comp_clean with diet_comp_na
+
+sum(diet_comp_clean$code == "")
+
+diet_comp_clean_na <- diet_comp_clean %>% 
+  mutate(code = ifelse(code == "", NA, code)) %>%  #check sum(is.na(diet_comp_clean_na$code))
+  select(country, code) %>% 
+  filter(is.na(code))
+
+country_vector <- distinct(diet_comp_clean_na, country)$country
+
+
+# distinct() a column from a data frame returns table
+# `$` selects a specific column returns as vector
+
+#attempt 1: No result returns
+#use `group_by` and `filter`-`is.na` function
+
+  # diet_comp_clean %>% 
+  # group_by(country) %>% 
+  # filter(is.na(code))
+
+#attempt 2: find out the type of missing value and turn it into NAs
+
+#change the empty string into NAs
+# #Success! Now code have NAs
+
+# diet_comp_na <- diet_comp_clean %>% 
+#   mutate(code = ifelse(code == "", NA, code))
+# sum(is.na(diet_comp_na$code))
+
+# then filter out which countries have the NAs
+
+# diet_comp_na %>%
+#   select(country, code) %>%
+#   filter(is.na(code)) %>%
+#   distinct(country, .keep_all= TRUE)
+
+
+# attempt 3: Successfully find the result but it does not return vector
+# test_na <- diet_comp_na %>%
+# group_by(country) %>% 
+# mutate(country_code_empty = (na_if(code =="", code))) %>% 
+# filter(is.na(country_code_empty)) %>% 
+# distinct(country_code_empty)
+
+```
+
+
+Q6 Search the ISO Alpha-3 codes on google and read files
+```{r}
+
+country_vector
+
+# CPV
+# USA
+
+```
+
+Q7 Using a suitable recoding function, fill in the lost (but now found) country codes. Overwrite diet_comp_clean again. Finally, check that there are now no missing values in the code column.
+`Tips :case_when()`
+
+```{r}
+#rewrite the diet_comp_clean dataset
+
+diet_comp_clean <- diet_comp_clean %>% 
+  mutate(code = case_when(
+    country == "Cabo Verde" ~ "CPV",
+    country == "United States of America" ~ "USA",
+    TRUE ~ code
+    ))
+
+# test all NAs in code cloumn are replaced
+sum(is.na(diet_comp_clean$code))
+
+
+
+#haven't overwrite the diet_comp_clean dataset yet
+#attempt 3: `coalesce()` is redundant in this case, so deleted it 
+
+diet_comp_clean_na <- diet_comp_clean_na %>% 
+  mutate(code = case_when(
+    country == "Cabo Verde" ~ "CPV",
+    country == "United States of America" ~ "USA"
+    ))
+
+distinct(diet_comp_clean_na)
+
+    
+#attempt 2: add `coalesce()` into the `case_when` to rewrite NAs value   
+#country == "United States of America" ~ coalesce(code = "USA")
+  
+
+
+
+# attempt 1: use coalesce to rewrite NAs into suitable code
+# diet_comp_clean_na %>% 
+#   select(country, code) %>% 
+#   mutate(code = coalesce("Cabo Verde" = "CPA")) %>% 
+#   mutate(code = coalesce("United States of America" = "USA"))      
+         
+
+
+
+```
+
+Question 8
+
+Note: Do NOT overwrite diet_comp_clean with the result of this question.
+
+Join the two datasets so only countries with matches in both are retained. Create a new logical column that is TRUE if the first two letters of code is the same as alpha_2_code.
+
+```{r}
+
+country_codes <- clean_names(country_codes)
+  
+
+diet_comp_clean_joined <- left_join(diet_comp_clean, country_codes, "country")
+
+diet_comp_clean_joined
+
+diet_comp_clean_joined <- diet_comp_clean_joined %>% 
+  mutate(first_two_leters = ifelse(substr(code, 1, 2) == alpha_2_code, TRUE, FALSE))
+
+diet_comp_clean_joined <- diet_comp_clean_joined %>%
+  mutate(first_two_leters = substr(code, 1, 2) == alpha_2_code)
+
+diet_comp_clean_joined
+
+sum(isTRUE(diet_comp_clean_joined$first_two_leters))
+ 
+distinct(diet_comp_clean_joined, first_two_leters)
+
+```
+
+Question 9
+
+That’s enough of country codes! Let’s look at the actual diets of some countries. Using diet_comp_clean, which is hopefully untarnished by the monstrosity that was Question 8, create a new variable called uk_diet which only contains data from the UK and with all NAs from avg_daily_kcals dropped.
+
+```{r}
+
+
+uk_diet <- pull(
+  
+  diet_comp_clean %>% 
+  select(country, avg_daily_kcals) %>% 
+  filter(country == "United Kingdom") %>% 
+  drop_na(),
+  avg_daily_kcals
+  
+)
+
+uk_diet <- diet_comp_clean %>% 
+  filter(country == "United Kingdom") %>%
+  drop_na(avg_daily_kcals)
+
+```
+
+Question 10
+
+Using uk_diet, create a new column that contains the difference in total calories between a year and the year before. Then find the year where there was the biggest positive difference and the biggest negative difference.
+
+```{r}
+
+uk_diet_group <- uk_diet %>% 
+  group_by(year) %>% 
+  summarise(kcal_of_year = sum(avg_daily_kcals)) 
+
+kcals <- uk_diet_group$kcal_of_year
+
+kcals_diff = c()
+for (n in 1:length(kcals)) {
+  kcals_diff[n] <- kcals[n] - kcals[n-1]
+}
+
+uk_diet_diff <- cbind(uk_diet_group, kcals_diff)
+  
+
+
+```
+
+
+Question 11
+
+Back to diet_comp_clean again. For every year between 1990 and 2000, find which country got the most average daily calories from alcoholic beverages, i.e. you want to end up with one country per year.
+
+```{r}
+
+diet_comp_clean <- drop_na(diet_comp_clean)
+
+diet_comp_clean %>% 
+  filter(kcal_source == "alcoholic_beverages", year >= 1990, year <= 2000) %>% 
+ group_by(country)
+  summarise(mean(avg_daily_kcals))
+  
+(diet_comp_clean %>% 
+    filter(kcal_source == "alcoholic_beverages", year == 1990) %>%
+    arrange(desc(avg_daily_kcals)))$country[1]
+
+for (i in 1990:2000) {
+  highest_country <- (diet_comp_clean %>% 
+    filter(kcal_source == "alcoholic_beverages", year == i) %>%
+    arrange(desc(avg_daily_kcals)))$country[1]
+  print(paste("Highest in",i,"is",highest_country))
+}
+
+
+```
+

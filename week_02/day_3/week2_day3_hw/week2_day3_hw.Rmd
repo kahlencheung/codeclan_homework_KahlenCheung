@@ -16,6 +16,7 @@ library(janitor)
 library(stringr)
 ```
 
+
 # MVP
 
 <br> 
@@ -70,6 +71,11 @@ weather_forecast_mt
 
 # byrow = TRUE arranges the order of temperature to the relevant days
 
+#name to rows/cols names in a matrix
+#my_matrix <- matrix(1:4, nrow = 2, dimnames = list(c("row_1", "row_2"), c("col_1", "col_2")))
+
+#my_matrix[,"col_2"]
+
 ```
 
 
@@ -112,10 +118,10 @@ Write a function that pre-appends "The answer is: " to any character input, whil
 test_function <- function(x){
   if ( is.character(x) == TRUE){
     return(paste("The answer is: ", x))
-  }else if ( is.numeric(x) == TRUE){
+  }else if ( is.numeric(x) == TRUE){  #is.numeric(x) & x<10
     if (x < 10){
       return(x)
-    }else if (x>10){
+    }else if (x>10){ #is.numeric(x) & x >=10
       return(x/10)
     }
   } else {
@@ -177,12 +183,23 @@ Write a function which checks if two vectors have the same elements.
 useful_function <- function(x, y){ #argument x and y
   if(x == y){
     return("Exactly the same.")
-  }else if( sort(x) == sort(y)){
+  }else if( sort(x) == sort(y)){       #if(all(sort(vector_1) == sort(vector_2)))
     return("The same")
   }else if ( x!=y){         #sort(x) !== sort(y)
     return("Different")
   }
 } 
+
+# Question_6 = function(vec1, vec2){
+#   if (identical(vec1, vec2)){
+#     return("EXACTLY THE SAME")
+#   }
+#   if (identical(sort(vec1), sort(vec2))){
+#     return("THE SAME")
+#   }else{
+#     return("DIFFERENT")
+#   }
+# }
 
 ```
 
