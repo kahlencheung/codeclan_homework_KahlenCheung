@@ -103,4 +103,3 @@ GROUP BY e.team_id, t.name
 --(b). The total_day_charge of a team is defined as the charge_cost of the team 
 --multiplied by the number of employees in the team. Calculate the total_day_charge for each team.
 
-
