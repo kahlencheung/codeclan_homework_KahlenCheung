@@ -1,0 +1,45 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+
+library(tidyverse)
+library(ggplot2)
+```
+
+```{r}
+
+#height_plot
+students_big %>% 
+  ggplot()+
+  aes( x = height)+
+  geom_bar()
+
+
+```
+
+```{r}
+
+#arm_plot
+students_big %>% 
+  ggplot()+
+  aes( x = arm_span)+
+  geom_bar()
+
+
+```
+
+```{r}
+
+#scatter_plot
+
+students_big %>% 
+  ggplot()+
+  aes( x = reaction_time, y = score_in_memory_game)+
+  geom_point()
+
+
+```
+
