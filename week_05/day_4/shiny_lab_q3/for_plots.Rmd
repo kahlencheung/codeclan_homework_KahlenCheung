@@ -1,0 +1,41 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+
+library(tidyverse)
+library(ggplot2)
+
+```
+
+
+```{r}
+
+students_big %>% 
+  ggplot()+
+  aes( x = handed, fill = gender)+
+  geom_bar(position = "dodge")
+
+```
+
+```{r}
+
+students_big %>% 
+  ggplot()+
+  aes( x = handed, fill = gender)+
+  geom_bar(position = "dodge")+
+  coord_flip()
+
+```
+
+```{r}
+
+students_big %>% 
+  ggplot()+
+  aes( x = handed, fill = gender)+
+  geom_bar()
+
+```
+
