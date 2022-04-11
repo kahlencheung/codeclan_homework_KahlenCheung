@@ -12,7 +12,7 @@ ui <- fluidPage(
     
    theme = shinytheme("slate"),
     
-    titlePanel("A Breif Review on Game Sales"),
+    titlePanel("A Brief Review on Game Sales"),
  
    
 ## In order to provide readers a straight forward review of all games, I chose `genre`, `user_score` and `critic_score`
