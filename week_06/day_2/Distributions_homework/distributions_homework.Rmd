@@ -1,0 +1,117 @@
+---
+title: "week_6_day_2_distributions_homework"
+output: html_notebook
+---
+
+##Q1. 
+Load the data
+```{r}
+
+library(tidyverse)
+library(janitor)
+
+items <- read_csv(here::here("data/20190928-items.csv"))
+
+items <- items %>% 
+  clean_names()
+  
+
+head(items)
+
+```
+
+##Q2. 
+Find the brand with the highest numbers of phones in the dataset.
+```{r}
+
+  items_count <- items %>% 
+  group_by(brand) %>% 
+  count(brand)
+
+#Samsung has the highest numbers of phones in the dataset
+
+```
+
+
+##Q3. 
+Plot the distribution of phone ratings as a probability density, overlaying a fitted normal distribution. 
+```{r}
+
+rating_stats <- items %>% 
+  filter(brand == "Samsung") %>% 
+  summarise(
+    num = n(),
+    mean = mean(rating),
+    sd = sd(rating)
+  )
+  
+rating_stats
+
+```
+```{r}
+
+
+items %>% 
+  filter(brand == "Samsung") %>% 
+  ggplot(aes(x = rating)) +
+  geom_histogram(aes(y = ..density..), col = "white", bins = 25)+
+  stat_function(
+    fun = dnorm,
+    args = list(
+      mean = rating_stats$mean,
+      sd = rating_stats$sd
+    ),
+    col = "red"
+  )
+
+
+```
+
+## Q4 
+You calculated the mean() and sd() of your distribution in an earlier question. 
+Use these values to calculate the proportions of ratings within one-, two- and three standard deviations of the mean. Compare these proportions with those you expect for a normal distribution.
+
+```{r}
+
+items_samsung <- items %>% 
+  filter(brand == "Samsung")
+
+items_samsung %>%
+  filter(rating >= rating_stats$mean - rating_stats$sd) %>%
+  filter(rating <= rating_stats$mean + rating_stats$sd) %>%
+  summarise(prop_within_1sd = n() / nrow(items_samsung))
+
+
+items_samsung %>%
+  filter(rating `` rating_stats$mean - rating_stats$sd) %>%
+  filter(rating `` rating_stats$mean + rating_stats$sd) %>%
+  summarise(prop_within_2sd = n() / nrow(items_samsung))
+
+items_samsung %>%
+  filter(rating `` rating_stats$mean - rating_stats$sd) %>%
+  filter(rating `` rating_stats$mean + rating_stats$sd) %>%
+  summarise(prop_within_3sd = n() / nrow(items_samsung))
+
+
+
+```
+
+```{r}
+
+items_samsung %>% 
+  group_by(brand) %>% 
+  summarise(
+    Q1 = quantile(rating, 0.25),
+    Q2 = quantile(rating, 0.5),
+    Q3 = quantile(rating, 0.75),
+    IQR = Q3 - Q1
+  )
+
+
+```
+
+
+
+
+
+

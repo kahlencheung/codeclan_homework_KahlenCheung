@@ -1,0 +1,47 @@
+---
+title: "Week_06_day_1_homework probability"
+output: html_notebook
+---
+
+```{r}
+
+library(gtools)
+library(prob)
+library(tidyverse)
+library(stringr)
+
+titanic <- read_csv(here::here("data/titanic.csv"))
+
+view(titanic)
+
+```
+
+##Question 1.1
+
+Calculate the conditional probabilities prob(survived∣crew) and prob(survived∣passenger) to settle this dispute.
+
+
+```{r}
+
+distinct(titanic, class)
+
+titanic_crew <- titanic %>% 
+  mutate(crew = ifelse(str_detect(class,"1st|2nd|3rd") , FALSE, TRUE))
+         
+         
+```
+
+
+```{r}
+
+survived_value <- 
+  titanic_crew %>% 
+  filter(survived == "yes") 
+  summarise(survived = n())
+  
+
+
+survied_value <- as.vector(survied_value)
+
+```
+
