@@ -1,0 +1,99 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+Q1. Load in data
+```{r}
+
+library(tidyverse)
+library(janitor)
+library(ggplot2)
+
+ames <- read_csv(here::here("data/ames.csv")) %>% 
+  clean_names()
+
+```
+
+Q2. Investigate the distribution of lot_area
+
+```{r}
+
+ames %>% 
+  ggplot(aes(x = lot_area))+
+  geom_histogram(col = "white", fill = "steel blue", alpha = 0.7)+
+  
+  #The distribution is not normal. It does not show the modal clearly since the range is very large, only observations that are below 50,000 is considered in this graph.
+```
+
+Q.3 Compute and visualise a bootstrap sampling distribution for the mean(lot_area) of the sold houses.
+
+```{r}
+
+library(infer)
+
+ames_resample_200 <- ames %>% 
+  rep_sample_n(size = 200, replace = TRUE, reps = 5000) %>% 
+  summarise(
+    mean_lot_area = mean(lot_area)
+  )
+
+ames_resample_200
+  
+
+ames_resample_200 %>% 
+  ggplot(aes(x = mean_lot_area))+
+  geom_histogram(col = "white", fill = "steel blue", alpha = 0.7)
+  
+
+```
+Q4. Use your bootstrap distribution to calculate a 95% CI for mean(lot_area), and visualise it on the distribution
+
+```{r}
+
+ames_resample <- ames%>% 
+  specify(response = lot_area) %>% 
+  generate(reps = 5000, type = "bootstrap") %>% 
+  calculate(stat = "mean")
+
+ames_resample_ci_95 <- ames_resample%>% 
+  get_confidence_interval(level = 0.95, type = "percentile")
+
+ames_resample_ci_95
+
+ames_resample %>% 
+  visualise(bins = 30) +
+  shade_confidence_interval(endpoints = ames_resample_ci_95)
+
+```
+
+Q.5 You would like to know the mean(lot_area) of the sold houses with higher confidence. 
+Calculate the 99% CI for this variable (you can re-use your bootstrap distribution from above). 
+Is it narrower or broader than the 95% CI? Does that make sense?
+
+```{r}
+
+ ames_resample_ci_99 <- ames_resample %>% 
+  get_confidence_interval(level = 0.99, type = "percentile")
+
+
+ames_resample %>% 
+  visualise(bins = 30) +
+  shade_confidence_interval(endpoints = ames_resample_ci_99)
+
+
+#It does make sense that ci 99% is broader than ci 95%
+
+```
+
+Q6. Calculate the point estimate of the mean(lot_area)
+```{r}
+
+
+ames_resample_200 %>%
+  summarise(point_est = mean(mean_lot_area))
+
+
+```
+
