@@ -1,0 +1,212 @@
+---
+title: "Week6_weekend_hw_hypothesis"
+output: html_notebook
+---
+
+
+```{r}
+
+library(tidyverse)
+library(janitor)
+library(infer)
+
+```
+
+##1.1
+
+Q1. Explore the dataset and familiarise yourself with it.
+```{r}
+
+msleep <- ggplot2::msleep %>% 
+  clean_names() %>% 
+  glimpse()
+
+msleep
+```
+
+
+Q2. Jabberwockies sleep for around 7 hours a night, on average. Perform an appropriate statistical test to determine whether the mean sleep_total in the sampled population of animal types differs from the typical value for jabberwockies.
+```{r}
+
+average_sleep_total <- mean(msleep$sleep_total)
+
+null_distribution <- msleep %>% 
+  specify(response = sleep_total) %>% 
+  hypothesize(null = "point", mu = 7) %>% 
+  generate(reps = 10000, type = "bootstrap") %>% 
+  calculate(stat = "mean")
+
+null_distribution %>% 
+  visualise(bin = 30) +
+  shade_p_value(obs_stat = average_sleep_total, direction = "both")
+
+p_value <- null_distribution %>%
+  get_p_value(obs_stat = average_sleep_total, direction = "both")
+
+p_value
+
+#H0 is rejected, which means significantly differed from the mean_sleep_total between Jabberwockies and all other animals.
+
+```
+
+Q3. Perform an appropriate statistical test to determine whether omnivores sleep for significantly longer than herbivores, on average.
+```{r}
+
+
+vore_msleep <- msleep %>%
+  select(sleep_total, vore) %>%
+  filter(vore == "omni" | vore == "herbi")
+
+vore_null_distribution <- vore_msleep %>% 
+  specify(sleep_total ~ vore) %>% 
+  hypothesize(null = "independence") %>% 
+  generate(reps = 10000, type = "permute") %>% 
+  calculate(stat = "diff in means", order = c("omni", "herbi"))
+
+vore_null_distribution
+
+vore_p_value <- vore_null_distribution %>%
+  get_p_value(obs_stat = mean(vore_msleep$sleep_total), direction = "greater")
+
+vore_p_value
+
+vore_p_value <- vore_null_distribution %>%
+  get_p_value(obs_stat = mean(vore_msleep$sleep_total), direction = "both")
+
+vore_p_value
+
+
+# Both p_value of direction = greater and direction = both are shown as 0 (which mean H0 is rejected), we are confident to say that omnivores sleeps less than herbivores.
+
+```
+
+
+Q4. Perform an appropriate statistical test to determine whether the proportion of domesticated animal types in the population of animal types is greater than 5%.
+```{r}
+
+is_domesticated <- msleep %>% 
+  mutate(conservation = if_else(conservation == "domesticated", "domesticated", "not_domesticated")) %>%
+  mutate(conservation = coalesce(conservation, "not_domesticated"))
+  
+
+
+prop_is_domesticated <- is_domesticated %>% 
+  specify(response = conservation, success = "domesticated") %>% 
+  hypothesise(null = "point", p = 0.05) %>% 
+  generate(reps = 10000, type = "draw") %>% 
+  calculate(stat = "prop")
+
+prop_is_domesticated
+
+domesticated_obs_stat =  length(which(msleep$conservation == "domesticated")) / length(msleep$conservation)
+
+prop_is_domesticated_p_value <- prop_is_domesticated %>% 
+  get_p_value(obs_stat = domesticated_obs_stat, direction = "right")
+
+prop_is_domesticated_p_value
+
+
+# p_value rejected the H0: p =0.05 when in a right-sided calculation, which means the domesticated animal types in the population of animal types is greater than 5%.
+  
+
+```
+
+
+##1.2
+
+###Q1.
+You work for a independent coffee shop. The boss tells you that she thinks that around 40%
+ of people in the town (population 30,000) know of the coffee shop, but you are skeptical of the estimate. You conduct a random survey of 200 people in the town, asking if respondents are aware of your coffee shop. You want to use the sample to test the hypothesis that 40% or more of the town’s population have heard of the coffee shop.
+ 
+__Ans.__
+
+In this task we will use the one-sample proportion test, as we are going to use a population of 200 people to predict the observations of a population of 30000 people, this means we compare a proportion from one sample against a specified value (40%). The result of 30000 people population will be simulated as the result of 200 people population: where  H0: P = 0.4 and Ha: P != 0.4 with a right-sided calculation.
+
+
+###Q2. 
+You work for a website design company and have performed an A/B test on the position of a banner on a website promoting a particular item. 
+You selected five days at random last month and then randomly selected 200 of each sampled day’s users into group A and another 200 of that day’s users into group B. 
+Group A continued to be shown the banner at the right hand side of the webpage (its usual position) while group B was shown the banner at the top of the page. 
+You monitored each sampled user’s interactions with the website, in particular the ‘click through rate’ (CTR) on the banner, 
+i.e. what proportion of sampled users clicked on the banner. You want to use the sampled data to test the hypothesis that website users overall are more likely to click on the banner if positioned at the top of the page
+
+__Ans.__
+
+In this task we will use the two proportions independent samples hypothesis test, as we are going to compare the proportions from two independent samples: Group A and Group B. We will use permutation to randomly check the 200 users' behaviors from both Group A and GroupB. We want to know if GroupB has more CTR than groupB, therefore the notation would be: H0: Pgroupb - Pgroupa = 0 and Ha: Pgroupb - Pgroupa != 0 with right sided. calculation.
+
+###Q3.
+
+You work as an analyst for a car manufacturing company - they have specific standards they must meet for standards and regulation purposes. 
+You have been asked to check the quality control of the manufacture of a particular car part. You have been given data on a sample of 200 parts produced over the period of a week (the sampled parts were pulled at random from the production line and measured: the factory produced a lot more than 200
+ parts that week). 
+ The specification of the part stipulates a width of 145mm, and the manufacturing process is said to have ‘drifted’ if the mean width of parts differs significantly from 145mm. You want to use the sampled measurements to test whether the process overall has drifted.
+
+
+__ANS.__
+
+In this task we will use the one-sample mean test, as we are going to compare the mean from one sample against a specified value, where 200 sample space is a subset of all car parts sample space, and the value is 145mm. We would use permutation method to generate null distribution since we don't want to repeat the observations. Besides, we want to know if mean width of the subset is not equal to 145mm, therefore the notation would be: H0: μ = 145 and Ha: μ != 145, with two sided calculation
+
+
+##1.3
+
+__Q1. Coffee shop problem. Significance level: 0.05, calculated p-value: 0.07__
+
+Since the p-value is greater than the critical value, we lack sufficient evidence to reject H0. Based on our sample, we do not have enough evidence that the proportion is statistically significantly greater than greater than the null value. Therefore, we are unable to agree that the hypothesis of "40% or more of the population know the coffee shop"
+
+__Q2. Website company problem. Significance level: 0.01, p-value: 0.006__
+It is smaller than our critical value of 0.01 and so we reject H0 and conclude that we have found enough evidence in our data to suggest that the top-banner-position CTR is greater than the right-hand-side-position-banner CTR.
+
+
+
+__Q3. Manufacturing company problem. Significance level: 0.05, p-value: 0.55__
+
+Since the p-value is greater than the critical value, we lack sufficient evidence to reject H0. Based on our sample, we do not have enough evidence that the mean statistically significantly less than or greater than the null value. Therefore we are unable to agree the hypothesis of "the process overall has drifted"
+
+
+
+##Extension
+
+```{r}
+
+library(readxl)
+
+online_retail_subset <- read_csv(here::here("data/online_retail_subset.csv")) %>% 
+  clean_names()
+
+online_retail <- read_csv(here::here("data/online_retail_subset.csv")) %>% 
+  clean_names()
+
+online_retail_numbers <- read_csv(here::here("data/online_retail_numbers.csv")) %>% 
+  clean_names()
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
