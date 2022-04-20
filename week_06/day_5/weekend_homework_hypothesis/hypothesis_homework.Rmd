@@ -78,6 +78,8 @@ vore_p_value
 
 # Both p_value of direction = greater and direction = both are shown as 0 (which mean H0 is rejected), we are confident to say that omnivores sleeps less than herbivores.
 
+#Simulation null distribution
+
 ```
 
 
