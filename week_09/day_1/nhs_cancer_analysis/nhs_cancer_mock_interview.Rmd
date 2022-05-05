@@ -1,0 +1,185 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## In order to help inform the planning for provision of cancer treatment services in NHS Borders, we would like to gain better understanding of the incidence of cancer in NHS Borders.
+
+
+```{r}
+library(prob)
+library(gtools)
+library(tidyverse)
+library(janitor)
+library(stringr)
+
+```
+
+
+```{r}
+
+health_board_all <- read_csv(here::here("data/Incidence_by_Health_Board.csv")) %>% 
+  clean_names()
+
+hb_code <- read_csv(here::here("data/geography_codes_and_labels_hb2014_01042019.csv")) %>% 
+  clean_names()
+
+view(health_board)
+view(hb_code)
+
+
+
+glimpse(health_board)
+
+```
+# Trend by year
+```{r}
+
+health_board_all %>% 
+  filter(hb == "S08000016") %>% 
+  filter(sex != "All") %>%
+  filter(cancer_site != "All cancer types") %>% 
+  group_by(year) %>% 
+  summarise(total_num_ages = sum(incidences_all_ages)) %>% 
+  ggplot(aes(x = year, y = total_num_ages))+
+  geom_line()+
+  geom_point()+
+  xlab("Year")+ ylab("Number of Incidences")+
+  ggtitle("The Total number of Incidences Trend by Year")
+  
+
+```
+# Trend by Gender
+```{r}
+
+health_board_all_filter <- health_board_all %>% 
+  filter(hb == "S08000016") %>% 
+  filter(sex != "All") %>%
+  filter(cancer_site != "All cancer types")
+  
+  health_board_all_filter %>% 
+  group_by(year, sex) %>% 
+  summarise(sex_number_incidences = sum(incidences_all_ages)) %>% 
+  ggplot(aes(x = year, y = sex_number_incidences, group = sex, colour = sex))+
+    geom_line()+
+    geom_point()+
+    xlab("Year")+ ylab("Number of Incidences")+
+  ggtitle("The Total number of Incidences Trend by Gender")
+
+```
+# Top 10 Site by Male
+```{r}
+
+  health_board_all_filter %>% 
+  filter(sex == "Male") %>% 
+  group_by(cancer_site) %>% 
+  summarise(site_number_incidences = sum(incidences_all_ages)) %>% 
+  arrange(desc(site_number_incidences)) %>% 
+  head(10) %>%
+  ggplot(aes(x = cancer_site, y = site_number_incidences))+
+  geom_col()+
+  xlab("Site")+ ylab("Number of Incidences(Male)")+
+  ggtitle("Top 10 Number of Incidences of Site across 1995-2020")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 6))
+```
+
+# Top 10 Site by Female
+```{r}
+health_board_all_filter %>% 
+  filter(sex == "Female") %>% 
+  group_by(cancer_site) %>% 
+  summarise(site_number_incidences = sum(incidences_all_ages)) %>% 
+  arrange(desc(site_number_incidences)) %>% 
+  head(10) %>%
+  ggplot(aes(x = cancer_site, y = site_number_incidences))+
+  geom_col()+
+  xlab("Site")+ ylab("Number of Incidences(Female)")+
+  ggtitle("Top 10 Number of Incidences of Site across 1995-2020")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 6))
+```
+# hide/delete this
+```{r}
+
+  site_top_10 <- health_board_all_filter %>% 
+  group_by(cancer_site) %>% 
+  summarise(total_site_num = sum(incidences_all_ages)) %>% 
+  arrange(desc(total_site_num)) %>%
+  head(10) %>% 
+  ggplot(aes(x = cancer_site, y = total_site_num))+
+  geom_col()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 6))
+
+site_top_10
+```
+
+
+## trend of top 10 site
+```{r}
+
+site_list_top_10 <- c("Non-melanoma skin cancer","Basal cell carcinoma of the skin", "Breast", "Trachea, bronchus and lung", "Colorectal cancer", "Prostate","Squamous cell carcinoma of the skin","Colon", "Carcinoma in situ of the cervix uteri","Rectum and rectosigmoid junction" )
+
+health_board_all_filter %>% 
+  group_by(year, cancer_site) %>% 
+  filter(cancer_site %in% site_list_top_10) %>% 
+  summarise(incidences_site_num = sum(incidences_all_ages)) %>% 
+  ggplot(aes(x = year, y = incidences_site_num, group = cancer_site, colour = cancer_site))+
+  geom_line()+
+  geom_point()+
+  xlab("Year")+ ylab("Number of Incidences")+
+  ggtitle("Top 10 Number of Incidences of Site across 1995-2020")+
+  theme(legend.text = element_text(size = 4))
+  
+```
+
+
+
+```{r}
+
+health_board <- read_csv(here::here("data/5_Year_Summary_of_Incidence_by_Health_Board.csv")) %>% 
+  clean_names()
+
+health_board_borders <- health_board %>% 
+  filter(hb == "S08000016") %>% 
+  filter(sex != "All") %>% 
+  select(1:26) %>% 
+  mutate(region = "NHS Borders", .after = 2) %>% 
+  
+
+health_board_borders_longer <- health_board_borders %>% 
+  pivot_longer(cols = 9:26, names_to = "age_range", values_to = "num_incidence")
+
+health_board_borders_longer <- health_board_borders_longer %>% 
+  mutate(age_range = str_c(
+    str_sub(age_range, start= 12)))
+
+health_board_borders_longer$age_range <- factor(health_board_borders_longer$age_range, levels = c("age_under5", "age5to9", "age10to14", "age15to19", "age20to24", "age25to29","age30to34", "age35to39", "age40to44", "age45to49", "age50to54", "age55to59", "age60to64", "age65to69", "age70to74", "age75to79", "age80to84", "age85and_over"))
+
+
+avg_num_incidence <- health_board_borders_longer %>% 
+  group_by(age_range) %>% 
+  mutate(total_incidence = sum(num_incidence))
+
+
+health_board_borders_longer %>% 
+  group_by(year, age_range, num_incidence) %>% 
+  summarise(age_incideneces = sum(num_incidence)) %>% 
+  ggplot(aes(x = age_range, y = age_incideneces))+
+  geom_col()+
+  geom_hline(yintercept = mean(avg_num_incidence$total_incidence), color="red")+
+  xlab("Age Range")+ ylab("Number of Incidences")+
+  ggtitle("Total Number of Incidences by Age across (2016-2020)")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 6))
+  
+  
+  
+
+```
+
+
+
+
+
+
+
+
+
