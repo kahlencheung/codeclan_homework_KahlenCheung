@@ -1,12 +1,16 @@
 ---
-title: "R Notebook"
-output: html_notebook
+title: "NHS-Borders Cancer Incidence Study"
+output:
+  html_document:
+    code_folding: hide
+  pdf_document: default
 ---
 
-## In order to help inform the planning for provision of cancer treatment services in NHS Borders, we would like to gain better understanding of the incidence of cancer in NHS Borders.
+```{r message = FALSE, warning = FALSE}
 
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(tidy = "styler")
 
-```{r}
 library(prob)
 library(gtools)
 library(tidyverse)
@@ -15,8 +19,19 @@ library(stringr)
 
 ```
 
+_Kahlen Cheung_<br>
+_05/05/2022_
+<br>
+<br>
+__Background__<br>
 
-```{r}
+
+The aim of the `NHS-Borders Cancer Incidences Study` is to gain better understanding of the incidence of cancer in NHS Borders, in order to help inform the planning for provision of cancer treatment services. The datasets used in this report are covered by the Open Government License, provided by Public Health Scotland. The author shares right to explore, distribute and publish as educational and case study purpose. Details as below:<br>
+<br>
+[Incidence by Health Board](https://www.opendata.nhs.scot/dataset/annual-cancer-incidence/resource/3aef16b7-8af6-4ce0-a90b-8a29d6870014)<br>
+[5 Year Summary of Incidence by Health Board](https://www.opendata.nhs.scot/dataset/annual-cancer-incidence/resource/e8d33b2b-1fb2-4d59-ad21-20fa2f76d9d5)<br>
+
+```{r message = FALSE, warning = FALSE}
 
 health_board_all <- read_csv(here::here("data/Incidence_by_Health_Board.csv")) %>% 
   clean_names()
@@ -24,16 +39,17 @@ health_board_all <- read_csv(here::here("data/Incidence_by_Health_Board.csv")) %
 hb_code <- read_csv(here::here("data/geography_codes_and_labels_hb2014_01042019.csv")) %>% 
   clean_names()
 
-view(health_board)
 view(hb_code)
 
-
-
-glimpse(health_board)
-
 ```
-# Trend by year
-```{r}
+#### Examine the Trend by Year (1995-2020)
+The datasets include the time frame from 1995 to 2020. It indicates that:
+<br>
+
+
+* The number of incidence of each year has rise continuously since 2000s. <br>
+* There were several peaks existed since `2018(1615)`, with a fluctuated flow until another peak peak in `2018(1843)`, followed by a sharp reduction.<br>
+```{r message = FALSE, warning = FALSE}
 
 health_board_all %>% 
   filter(hb == "S08000016") %>% 
@@ -45,76 +61,22 @@ health_board_all %>%
   geom_line()+
   geom_point()+
   xlab("Year")+ ylab("Number of Incidences")+
-  ggtitle("The Total number of Incidences Trend by Year")
+  ggtitle("The Trend of Total Incidences Trend by Year")
   
 
 ```
-# Trend by Gender
-```{r}
+<br>
+<br>
+
+
+* By viewing the top 10 cancer sites that registered with most incidence in the time frame, the `Non-melanoma skin cancer` has the most incidence registered from all the time. However the number has dropped since 2018, it is still the most common diseases compared to others, as well as cancer site of `Basal cell carcinoma of the skin`.<br>  
+* Additionally, the sites of `Squamous cell carcinoma of the skin` and `Trachea, bronchus and lung` have around 100 or more incidence registered per year, yet, there is sign to show that the number increases slightly after 2020.<br>  
+```{r message = FALSE}
 
 health_board_all_filter <- health_board_all %>% 
   filter(hb == "S08000016") %>% 
   filter(sex != "All") %>%
   filter(cancer_site != "All cancer types")
-  
-  health_board_all_filter %>% 
-  group_by(year, sex) %>% 
-  summarise(sex_number_incidences = sum(incidences_all_ages)) %>% 
-  ggplot(aes(x = year, y = sex_number_incidences, group = sex, colour = sex))+
-    geom_line()+
-    geom_point()+
-    xlab("Year")+ ylab("Number of Incidences")+
-  ggtitle("The Total number of Incidences Trend by Gender")
-
-```
-# Top 10 Site by Male
-```{r}
-
-  health_board_all_filter %>% 
-  filter(sex == "Male") %>% 
-  group_by(cancer_site) %>% 
-  summarise(site_number_incidences = sum(incidences_all_ages)) %>% 
-  arrange(desc(site_number_incidences)) %>% 
-  head(10) %>%
-  ggplot(aes(x = cancer_site, y = site_number_incidences))+
-  geom_col()+
-  xlab("Site")+ ylab("Number of Incidences(Male)")+
-  ggtitle("Top 10 Number of Incidences of Site across 1995-2020")+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 6))
-```
-
-# Top 10 Site by Female
-```{r}
-health_board_all_filter %>% 
-  filter(sex == "Female") %>% 
-  group_by(cancer_site) %>% 
-  summarise(site_number_incidences = sum(incidences_all_ages)) %>% 
-  arrange(desc(site_number_incidences)) %>% 
-  head(10) %>%
-  ggplot(aes(x = cancer_site, y = site_number_incidences))+
-  geom_col()+
-  xlab("Site")+ ylab("Number of Incidences(Female)")+
-  ggtitle("Top 10 Number of Incidences of Site across 1995-2020")+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 6))
-```
-# hide/delete this
-```{r}
-
-  site_top_10 <- health_board_all_filter %>% 
-  group_by(cancer_site) %>% 
-  summarise(total_site_num = sum(incidences_all_ages)) %>% 
-  arrange(desc(total_site_num)) %>%
-  head(10) %>% 
-  ggplot(aes(x = cancer_site, y = total_site_num))+
-  geom_col()+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 6))
-
-site_top_10
-```
-
-
-## trend of top 10 site
-```{r}
 
 site_list_top_10 <- c("Non-melanoma skin cancer","Basal cell carcinoma of the skin", "Breast", "Trachea, bronchus and lung", "Colorectal cancer", "Prostate","Squamous cell carcinoma of the skin","Colon", "Carcinoma in situ of the cervix uteri","Rectum and rectosigmoid junction" )
 
@@ -130,10 +92,90 @@ health_board_all_filter %>%
   theme(legend.text = element_text(size = 4))
   
 ```
+<br>
+<br>
 
 
+* For the comparison of Male and Female, the graph indicates that number of incidence by Male has increased sharply since 2002, while the number of Female has risen steadily but still fewer than Male.<br>  
+* Both groups experienced a decrease since 2018, and dropped sharply afterwards.<br>  
+```{r message = FALSE, warning = FALSE}
 
+  health_board_all_filter %>% 
+  group_by(year, sex) %>% 
+  summarise(sex_number_incidences = sum(incidences_all_ages)) %>% 
+  ggplot(aes(x = year, y = sex_number_incidences, group = sex, colour = sex))+
+    geom_line()+
+    geom_point()+
+    xlab("Year")+ ylab("Number of Incidences")+
+  ggtitle("The Total Number of Incidences Trend by Gender")
+
+```
+<br>
+<br>
+
+
+* Look into the most common diseases of Male incidence, they are: `Non-melanoma skin cancer`, `Basal cell carcinoma of the skin` and `Prostate`.<br>  
 ```{r}
+
+  health_board_all_filter %>% 
+  filter(sex == "Male") %>% 
+  group_by(cancer_site) %>% 
+  summarise(site_number_incidences = sum(incidences_all_ages)) %>% 
+  arrange(desc(site_number_incidences)) %>% 
+  head(10) %>%
+  ggplot(aes(x = cancer_site, y = site_number_incidences))+
+  geom_col()+
+  xlab("Site")+ ylab("Number of Incidences")+
+  ggtitle("Top 10 Number of Cancer Site (Male)")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 6))
+```
+<br>
+<br>
+
+
+* While the most common diseases of Male incidence are: `Breast`, `Non-melanoma skin cancer` and `Basal cell carcinoma of the skin`.<br>  
+```{r}
+health_board_all_filter %>% 
+  filter(sex == "Female") %>% 
+  group_by(cancer_site) %>% 
+  summarise(site_number_incidences = sum(incidences_all_ages)) %>% 
+  arrange(desc(site_number_incidences)) %>% 
+  head(10) %>%
+  ggplot(aes(x = cancer_site, y = site_number_incidences))+
+  geom_col()+
+  xlab("Site")+ ylab("Number of Incidences")+
+  ggtitle("Top 10 Number of Cancer Site (Female)")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 6))
+```
+<br>
+<br>
+<details>
+<br>
+The most common disease of both genders.<br>  
+```{r}
+# A supplementary 
+  site_top_10 <- health_board_all_filter %>% 
+  group_by(cancer_site) %>% 
+  summarise(total_site_num = sum(incidences_all_ages)) %>% 
+  arrange(desc(total_site_num)) %>%
+  head(10) %>% 
+  ggplot(aes(x = cancer_site, y = total_site_num))+
+  geom_col()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 6))
+
+site_top_10
+```
+</details>
+<br>
+<br>
+<br>
+#### Examine the Trend by Age Range  
+The age range is divided as 18 groups: `under 5`, `5-9`, `10-14`, `15-19`, `20-24`, `25-29`, `30-34`, `35-39`, `40-44`, `45-49`, `50-54`, `55-29`, `60-64`, `65-69`, `70-74`, `75-79`, `80-84`and `over 85`.<br>
+
+
+* The average number of incidence of all age group is `686`.<br>  
+* The graphs shows that age group start from `50-54` and after tends to have 3 times or more incidence compared to the age group is or before `45-49`.<br>  
+```{r message = FALSE, warning = FALSE}
 
 health_board <- read_csv(here::here("data/5_Year_Summary_of_Incidence_by_Health_Board.csv")) %>% 
   clean_names()
@@ -142,7 +184,7 @@ health_board_borders <- health_board %>%
   filter(hb == "S08000016") %>% 
   filter(sex != "All") %>% 
   select(1:26) %>% 
-  mutate(region = "NHS Borders", .after = 2) %>% 
+  mutate(region = "NHS Borders", .after = 2)
   
 
 health_board_borders_longer <- health_board_borders %>% 
@@ -174,7 +216,12 @@ health_board_borders_longer %>%
   
 
 ```
-
+<br>
+<br>
+<br>
+\bcenter
+The End
+\ecenter
 
 
 
