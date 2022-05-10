@@ -1,0 +1,51 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+
+library(tidyverse)
+
+project_management <- read_csv(here::here("data/project_management.csv"))
+
+```
+
+Plot the data, taking estimated_length as the independent variable and actual_length as the dependent variable.
+
+* Since y increases while x increases, we can know that this is a positive correlation
+
+```{r}
+
+project_management %>% 
+  ggplot(aes(x = estimated_length, y = actual_length))+
+  geom_point()
+
+```
+
+Calculate the correlation coefficient of estimated_length and actual_length and interpret the value you obtain.
+
+* These variables are very strongly positively correlated.
+
+```{r}
+
+project_management %>% 
+  summarise(cor(estimated_length, actual_length))
+
+```
+
+Perform a simple linear regression using actual_length as the dependent variable, and estimated_length as the independent variable. Save the model object to a variable.
+
+```{r}
+
+project_management_regression <- project_management %>% 
+  ggplot(aes(x = estimated_length, y = actual_length))+
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE)
+
+project_management_regression
+
+```
+
+
+
