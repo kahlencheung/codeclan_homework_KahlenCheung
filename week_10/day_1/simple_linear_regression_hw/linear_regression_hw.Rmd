@@ -47,5 +47,16 @@ project_management_regression
 
 ```
 
+Interpret the regression coefficient of estimated_length (i.e. slope, gradient) you obtain from the model. How do you interpret the r2 value reported by the model?
+
+```{r}
+
+get_line <- function(x, b0, b1){
+return(b0 + x * b1)
+}
+
+
+```
+
 
 

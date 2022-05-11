@@ -1,0 +1,114 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+
+library(tidyverse)
+library(fastDummies)
+library(janitor)
+
+
+```
+
+```{r}
+
+housing_prices <- read_csv(here::here("data/housing_prices.csv")) %>% 
+  clean_names()
+
+view(housing_prices)
+
+housing_prices %>% 
+  summarise(sum_na = sum(is.na(.) == TRUE))
+
+housing_prices <- housing_prices %>% 
+  mutate(across(where(is.numeric),
+                      ~coalesce(., median(., na.rm = TRUE))))
+```
+
+2. We expect the total_rooms of houses to be strongly correlated with total_bedrooms. Use ggpairs() to investigate correlations between these two variables.
+
+The significant correaltion between total room and total bedroom is 0.931, which means highly correlated.
+
+```{r}
+
+library(GGally)
+
+housing_prices_trim <- housing_prices %>% 
+  select(total_rooms, total_bedrooms)
+
+
+```
+
+3. So, we do find significant correlations. Let’s drop total_bedrooms from the dataset, and use only total_rooms going forward.
+
+```{r}
+
+housing_prices_drop <- housing_prices_trim %>% 
+  select(total_rooms)
+
+ggpairs(housing_prices_drop)
+
+```
+
+4. We are interested in developing a regression model for the median_house_value of a house in terms of the possible predictor variables in the dataset.
+
+The protentails predictors variables would be `total_rooms`, `populatpion` and `ocean_proximity`.
+
+```{r}
+
+median_hs_prices_sub <- housing_prices %>% 
+  select(-longitude, -latitude, -total_bedrooms)
+
+alias(lm(median_house_value ~., data = median_hs_prices_sub))
+
+ggpairs(median_hs_prices_sub)
+  
+
+```
+
+Perform further ggplot visualisations of any significant correlations you find.
+
+```{r}
+
+median_hs_prices_sub %>% 
+  ggplot(aes(x = median_income, y = median_house_value))+
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE)
+
+```
+
+
+Shortly we may try a regression model to fit the categorical predictor ocean_proximity. Investigate the level of ocean_proximity predictors. How many dummy variables do you expect to get from it?
+
+5 variables
+
+```{r}
+
+unique(housing_prices$ocean_proximity)
+
+```
+
+Start with simple linear regression. Regress median_house_value on median_income and check the regression diagnostics.
+
+```{r}
+
+model <- lm(formula = median_house_value ~ median_income, data = housing_prices)
+
+model
+
+summary(model)
+```
+
+Add another predictor of your choice. Check your assumptions, diagnostics, and interpret the model.
+
+```{r}
+
+model_2 <- lm(formula = median_house_value ~ median_income + total_rooms, data = housing_prices)
+
+summary(model_2)
+
+```
+
+
