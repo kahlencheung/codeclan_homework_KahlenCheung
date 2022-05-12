@@ -58,11 +58,16 @@ kc_house_data_trim <- kc_house_data_trim %>%
 
 * Have a think about how to treat `condition` and `grade`? Are they interval or categorical ordinal data types?
 
+
+
 - Both `condition` and `grade` are interval data type.
 
 ```{r}
 
 unique(kc_house_data_trim$condition)
+
+# need to change to categorical ordinal data types, so create a linear relationship
+# as.factor > order
 
 ```
 
@@ -82,6 +87,9 @@ library(mosaic)
 
 alias(lm(price ~., kc_house_data_trim))
 
+# should not discard either sqft_basement or sqft_above 
+
+# left column `sqft_basement` affect other variables, so should keep it
 
 ```
 
@@ -106,7 +114,7 @@ kc_house_data_drop_num <- kc_house_data_drop %>%
 
 ggpairs(kc_house_data_drop_num)
 
-
+# the higher corr the better
 ```
 
 price ~ grade corr: 0.667
@@ -221,6 +229,12 @@ mod2b <- lm(price ~ grade + view, data = kc_house_data_drop_grading)
 
 summary(mod2b)
 ```
+
+### autoplot review
+
+conclusion for auto plot:
+A linear model is / is not the appropreaite model for this 
+take a log, make the graphs look normal
 
 
 Mod2b with `grade + view` has higher r^2 value, so we keep the predictor and discard `grade`.
