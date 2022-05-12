@@ -8,6 +8,7 @@ output: html_notebook
 library(tidyverse)
 library(fastDummies)
 library(janitor)
+library(modelr)
 
 
 ```
@@ -112,3 +113,14 @@ summary(model_2)
 ```
 
 
+Extension
+
+```{r}
+
+ggplot(house_trim, aes(log(median_imcome), median_house_value))+
+  geom_point()+
+  geom_smooth(method = "lm")
+
+```
+
+log - compressing the scale

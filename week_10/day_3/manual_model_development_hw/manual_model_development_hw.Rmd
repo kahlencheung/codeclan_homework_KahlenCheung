@@ -1,0 +1,250 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+
+library(tidyverse)
+library(GGally)
+library(ggfortify)
+
+
+```
+
+```{r}
+
+kc_house_data <- read_csv(here::here("data/kc_house_data.csv")) 
+  
+glimpse(kc_house_data)
+```
+
+## Question 1
+* You might like to think about removing some or all of `date`, `id`, `sqft_living15`, `sqft_lot15` and `zipcode` (`lat` and `long` provide a better measure of location in any event).
+
+
+```{r}
+
+kc_house_data_trim <- kc_house_data %>% 
+  select(-id, -date, -sqft_living15, -sqft_lot15, -zipcode)
+
+```
+
+
+* Have a think about how to treat `waterfront`. Should we convert its type?
+- 0 and 1 means logical type
+
+```{r}
+
+unique(kc_house_data_trim$waterfront)
+
+```
+
+
+* We converted `yr_renovated` into a `renovated` logical variable, indicating whether the property had ever been renovated. You may wish to do the same.
+# I dont' quite get the question. 0 , 1 also refers to (TRUE/FALSE, logical). But I haven't seen any T/F values used in this topic
+```{r}
+
+kc_house_data_trim <- kc_house_data_trim %>% 
+  mutate(renovated = if_else(yr_renovated != 0, 1, 0), .after = 14) %>% 
+  select(- yr_renovated)
+  
+  
+
+
+```
+
+
+* Have a think about how to treat `condition` and `grade`? Are they interval or categorical ordinal data types?
+
+- Both `condition` and `grade` are interval data type.
+
+```{r}
+
+unique(kc_house_data_trim$condition)
+
+```
+
+```{r}
+unique(kc_house_data_trim$grade)
+```
+
+## Question 2
+
+Check for aliased variables using the alias() function (this takes in a formula object and a data set). [Hint - formula price ~ . says ‘price varying with all predictors’, this is a suitable input to alias()]. Remove variables that lead to an alias. Check the ‘Elements of multiple regression’ lesson for a dropdown containing further information on finding aliased variables in a dataset.
+
+- `sqft_above` (-1) means not `sqft_above`TRUE. So we can drop this column
+
+```{r}
+
+library(mosaic)
+
+alias(lm(price ~., kc_house_data_trim))
+
+
+```
+
+```{r}
+
+kc_house_data_drop <- kc_house_data_trim %>% 
+  select(- sqft_above)
+
+```
+
+
+## Question 3
+
+Systematically build a regression model containing up to four main effects (remember, a main effect is just a single predictor with coefficient), testing the regression diagnostics as you go * splitting datasets into numeric and non-numeric columns might help ggpairs() run in manageable time, although you will need to add either a price or resid column to the non-numeric dataframe in order to see its correlations with the non-numeric predictors.
+
+price ~ sqft_living corr: 0.755 (wont' consider bedrooms/bathrooms/basement since it also means the square ft of living spaces)
+price ~ lat corr: 0.307
+
+```{r}
+kc_house_data_drop_num <- kc_house_data_drop %>% 
+  select(-waterfront, -view, -condition, -grade, -renovated)
+
+ggpairs(kc_house_data_drop_num)
+
+
+```
+
+price ~ grade corr: 0.667
+price ~ view corr: 0.397
+```{r}
+
+kc_house_data_drop_grading <- kc_house_data_drop %>% 
+  select(price, waterfront, view, condition, grade, renovated)
+
+ggpairs(kc_house_data_drop_grading)
+
+```
+
+## Modelling
+
+From the graph, we expect to examine the fllowing predictors
+
+price ~ sqft_living corr: 0.755 
+price ~ lat corr: 0.307
+price ~ grade corr: 0.667
+price ~ view corr: 0.397
+
+
+### mod1a
+
+first predictor
+
+price = -43580.7 + 280.6*sqft_living
+r^2 value = 0.49,  indicates that near 50% of the variability in the outcome data can / cannot be explained by the model
+p-value: < 2.2e-16
+```{r}
+
+mod1a <- lm(price ~ sqft_living, data = kc_house_data_drop_num)
+
+mod1a
+# price = -43580.7 + 280.6*sqft_living
+
+summary(mod1a)
+
+```
+
+### mod1b
+
+second predictor: `year_built`
+
+From the numeric predictors, it looks like `bathrooms` has the strongest correlation, however, since it should be considered as  living spaces, where included by `sqft_living` 
+
+r^2 value = 0.52
+p-value: < 2.2e-16
+
+```{r}
+
+library(modelr)
+
+kc_house_data_drop_num_resid <- kc_house_data_drop_num %>% 
+  add_residuals(mod1a) %>% 
+  select(-price, -sqft_living)
+
+ggpairs(kc_house_data_drop_num_resid)
+
+```
+
+```{r}
+
+mod1b <- lm(price ~ sqft_living + yr_built, data = kc_house_data_drop_num)
+
+summary(mod1b)
+
+```
+
+Mod1b with `sqft_living + yr_built` has higher r^2 value, so we keep the predictor and discard `sqft_living`
+
+
+### mod2a
+
+r^2 value = 0.44, indicates that near 44% of the variability in the outcome data can be explained by the model
+p-value: < 2.2e-16
+
+```{r}
+
+mod2a <- lm(price ~ grade, data = kc_house_data_drop_grading)
+
+mod2a
+
+
+summary(mod2a)
+
+
+```
+
+### mod2b
+
+second predictor: `view`
+
+From the numeric predictors, it looks like `view` has the strongest correlation
+
+r^2 value = 0.50
+p-value: < 2.2e-16
+
+```{r}
+
+kc_house_data_drop_grading_resid <- kc_house_data_drop_grading %>% 
+  add_residuals(mod2a) %>% 
+  select(-price, -grade)
+
+ggpairs(kc_house_data_drop_grading_resid)
+
+```
+
+```{r}
+mod2b <- lm(price ~ grade + view, data = kc_house_data_drop_grading)
+
+summary(mod2b)
+```
+
+
+Mod2b with `grade + view` has higher r^2 value, so we keep the predictor and discard `grade`.
+This is what i expected for the non-numeric variables (df: kc_house_data_drop_grading)
+
+
+### Check which model to use
+
+Compare mod1b and mod2b:
+
+Since both model have same residual value `21610` and 
+both p-value are less than 0.05;
+So we cannot reject both models
+
+```{r}
+
+anova(mod1b, mod2b)
+
+```
+
+
+
+
+
+
+
+
