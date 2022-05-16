@@ -196,7 +196,7 @@ anova(mod1a, mod1b, mod1c)
 ```
 
 
-### 
+## Validation test
 
 ```{r}
 
