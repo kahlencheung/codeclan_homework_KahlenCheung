@@ -1,0 +1,207 @@
+---
+title: "Weekend_hm_model_building"
+output:
+  html_document:
+    toc: yes
+    toc_float: true
+    theme: united
+
+---
+
+Kahlen Cheung
+14/05/22
+
+* Build a multiple linear regression model,  to model the `AveragePrice` of the avocados.  
+
+* Use the validation techniques to evaluate the model.  
+
+* Build an explanatory or a predictive model.  
+
+* Interpreting the results and write in the scripts.  
+
+```{r setup, message = FALSE, warning = FALSE}
+
+library(tidyverse)
+library(janitor)
+library(GGally)
+library(ggfortify)
+library(modelr)
+library(lubridate)
+
+```
+
+
+```{r echo=FALSE,results='hide'}
+
+avocado <- read_csv(here::here("data/avocado.csv")) %>% 
+  clean_names()
+
+glimpse(avocado)
+```
+
+
+```{r}
+
+avocado <- avocado %>% 
+  mutate(month = month(date), .after = 13)
+
+```
+
+
+## Data Cleaning
+
+Discard columns:
+`x1` ( an index column), 
+`date` (use year/month instead), 
+`total_bags` ( It is computed from small/large/xlarge bags)
+`region`
+
+```{r}
+
+avocado_trim <- avocado %>% 
+  select(-x1, -date, -total_bags, -region)
+
+```
+
+* Add `month` column as one of the variables
+
+```{r}
+
+avocado_trim <- avocado_trim %>% 
+  mutate(year = as.factor(year)) %>% 
+  mutate(month = as.factor(month)) %>% 
+  mutate(type = as.factor(type)) #
+
+```
+
+## Partitial dataset
+
+### Use alias() to check whether the variables are unqiue to be predictors
+
+1.1 Create a dataset that only contains numerical variables.
+
+```{r}
+
+avocado_null <- avocado_trim %>% 
+  select(-year, -month, -type)
+
+```
+
+1.2 Check which variable is suitable to be the predictors
+
+* no aliases in this dataset
+
+```{r}
+
+alias(lm(average_price ~ ., data = avocado_null))
+
+```
+
+
+2.1 Create a dataset that only contains categorical variables.
+
+```{r}
+
+avocado_cat <- avocado_trim %>% 
+  select(average_price, year, month, type)
+
+```
+
+2.2 Check which variable is suitable to be the predictors
+
+* no aliases in this dataset  
+
+```{r}
+alias(lm(average_price ~ ., data = avocado_cat))
+```
+
+
+## Find predictors
+
+### Use ggpairs() to check corr values of predictors
+
+* The corr value is <0 , which means there is negative association between `average_price` and all predictors
+
+```{r}
+ggpairs(avocado_null)
+```
+
+* The plot interprets an appropriate relations between `average_price` and all predictors: `year`, `month` and `type`. 
+
+```{r}
+
+ggpairs(avocado_cat)
+
+```
+
+## Bulding model
+
+### Mod1a
+
+average_price ~ year
+r^2: 0.03489
+p-value: < 2.2e-16
+
+```{r}
+
+mod1a <- lm(average_price ~ year, data = avocado_cat)
+
+summary(mod1a)
+
+```
+
+
+```{r}
+
+avocado_trim_resid <- avocado_cat %>% 
+  add_residuals(mod1a) %>% 
+  select(-c("average_price", "year"))
+
+ggpairs(avocado_trim_resid)
+
+```
+
+### Mod1b
+
+average_price ~ year + month
+r^2: 0.09475
+p-value: < 2.2e-16
+
+```{r}
+
+mod1b <- lm(average_price ~ year + month, data = avocado_cat)
+
+summary(mod1b)
+
+```
+
+### Mod1c
+
+average_price ~ year + month + type
+r^2: 0.474
+p-value: < 2.2e-16
+
+```{r}
+
+mod1c <- lm(average_price ~ year + month + type, data = avocado_cat)
+
+summary(mod1c)
+
+```
+
+* `mod1c` has the greatest F value, means the group mean is highly relative to the variables. `modic` is the fittest model.
+
+```{r}
+anova(mod1a, mod1b, mod1c)
+```
+
+
+### 
+
+```{r}
+
+
+
+```
+
+
