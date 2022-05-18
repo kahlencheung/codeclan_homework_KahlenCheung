@@ -1,0 +1,242 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(janitor)
+```
+
+
+```{r}
+
+customers <- read_csv(here::here("data/mall_customers.csv")) %>% 
+  clean_names() %>% 
+  rename(annual_income = annual_income_k) %>% 
+  rename(spending_score = spending_score_1_100) %>% 
+  select(-customer_id) %>% 
+  na.omit()
+
+customers 
+
+```
+
+## Exploring Data
+
+```{r}
+
+customers %>% 
+  ggplot(aes( spending_score, annual_income, colour = gender))+
+  geom_point()
+
+
+```
+
+```{r}
+
+customers %>% 
+  ggplot(aes(spending_score))+
+  geom_histogram()
+ 
+
+```
+
+
+```{r}
+
+customers %>% 
+  ggplot(aes(annual_income))+
+  geom_histogram()
+
+```
+
+
+## K-means clustering
+
+```{r}
+
+ customers_data <- customers %>% 
+  select(spending_score, annual_income)
+
+```
+
+
+```{r}
+
+
+ customers_data %>% 
+  as_tibble() %>% 
+  pivot_longer(cols = c(spending_score, annual_income),
+               names_to = "type",
+               values_to = "value") %>% 
+  group_by(type) %>% 
+  summarise(mean = round(mean(value)),
+            sd = sd (value))
+
+```
+* the mean and sd of `annual_income` and `spending_score` is pretty close. Scaling is unnecssary is this case.
+
+```{r}
+
+# customers_scale <- customers %>% 
+#   mutate_if(is.numeric, scale)
+
+```
+
+
+```{r}
+
+customers_clustered <- kmeans(customers_data,
+                              centers = 5,
+                              nstart = 20)
+
+customers_clustered 
+``` 
+
+```{r}
+
+library(broom)
+
+tidy(customers_clustered,
+     col.names = colnames(customers_data))
+
+```
+
+```{r}
+
+glance(customers_clustered)
+
+```
+
+
+### Set min & max number of cluster
+
+
+```{r}
+
+max_k <- 15
+
+k_customers_clusters <- tibble(k = 1 : max_k) %>% 
+  mutate(kclust = map(k, ~kmeans(customers_data, .x, nstart = 20)),
+         tidied = map(kclust, tidy),
+         glanced = map(kclust, glance),
+         augmented = map(kclust, augment, customers_data))
+
+k_customers_clusters 
+
+```
+
+
+```{r}
+
+clustering <- k_customers_clusters %>% 
+  unnest(glanced)
+
+clustering 
+
+```
+
+
+### Choose the number of cluster (k = ...)
+
+* Perform ggplot to visualise the results
+
+```{r}
+
+ggplot(clustering, aes(x = k, y = tot.withinss))+
+  geom_point()+
+  geom_line()+
+  scale_x_continuous(breaks = seq(1, 15, by = 1))
+
+```
+
+
+* Use `fviz_nbclust` to find a suitable number of cluster
+
+```{r}
+library(factoextra)
+```
+
+To find optimal number of clusters
+
+_Elbow method_
+
+```{r}
+
+fviz_nbclust(customers_data,
+             kmeans,
+             method = "wss",
+             nstart = 20)
+
+```
+
+* In this graph it shows that there is a slight change of rate at around k =3, which means it suggests that the optimal number of clusters for this dataset is 3.
+
+_Silhouette coefficient_
+
+```{r}
+
+fviz_nbclust(customers_data,
+             kmeans,
+             method = "silhouette",
+             nstart = 20)
+
+```
+
+* A value of k = 5 is the maximum, with points also close to the average silhouette width of 0.5. Still, we ideally looking for a higher value.
+
+_Gap Statistics_
+
+```{r}
+
+fviz_nbclust(customers_data,
+             kmeans,
+             method = "gap_stat",
+             nstart = 20,
+             k.max = 15)
+
+
+```
+
+* The null distribution of the data is generated. The k = 1 interprets the difference of a simulated null distributed data and the well clustered data. Since k =1 is the highest of local, we choose k = 2 as number for clusters.
+
+## Conclusion
+
+The methods suggest suggest 3 numbers for clusters: k =2, k =3, k =5
+
+```{r}
+
+ clustering %>% 
+  unnest(cols = c(augmented)) %>%
+  filter(k == 2) %>%
+  ggplot(aes(x = annual_income, y = spending_score)) +
+  geom_point(aes(color = .cluster))
+
+```
+
+The result turns out quite similar to the plot that created at the begining. 
+
+However there is not a clear classification of two clusters:
+
+* try k = 3
+
+
+```{r}
+
+ clustering %>% 
+  unnest(cols = c(augmented)) %>%
+  filter(k == 3) %>%
+  ggplot(aes(x = annual_income, y = spending_score)) +
+  geom_point(aes(color = .cluster))
+
+
+
+```
+
+It shows that cluster 1 may have more elements that worth to discover.
+
+
+
+/Failed to make `gender` as column_to_rownames since it is duplicated. /
+
