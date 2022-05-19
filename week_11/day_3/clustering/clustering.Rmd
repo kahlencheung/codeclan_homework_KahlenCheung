@@ -24,6 +24,8 @@ customers
 
 ## Exploring Data
 
+(is is suitable for clustering)
+
 ```{r}
 
 customers %>% 
@@ -175,6 +177,8 @@ fviz_nbclust(customers_data,
 
 _Silhouette coefficient_
 
+
+
 ```{r}
 
 fviz_nbclust(customers_data,
@@ -198,6 +202,13 @@ fviz_nbclust(customers_data,
 
 
 ```
+
+(k = 1 is local maixmum, no need to use it;
+k = 5 is global maximum, choose it in this case)
+
+(highlight the one before the peak)
+
+the k = 1 is local maximum, but we won't use it 
 
 * The null distribution of the data is generated. The k = 1 interprets the difference of a simulated null distributed data and the well clustered data. Since k =1 is the highest of local, we choose k = 2 as number for clusters.
 
@@ -235,6 +246,17 @@ However there is not a clear classification of two clusters:
 ```
 
 It shows that cluster 1 may have more elements that worth to discover.
+
+
+```{r}
+
+clustering %>% 
+  unnest(cols = c(augmented)) %>%
+  filter(k == 5) %>%
+  ggplot(aes(x = annual_income, y = spending_score)) +
+  geom_point(aes(color = .cluster))
+
+```
 
 
 
