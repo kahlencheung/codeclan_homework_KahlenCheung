@@ -1,0 +1,221 @@
+---
+title: "Week 11 Logistic Regression Weekend Homework"
+output:
+  html_document:
+    toc: yes
+    toc_float: true
+    theme: united
+
+---
+Kahlen Cheung
+20/05/2022
+
+
+```{r}
+library(tidyverse)
+library(janitor)
+```
+
+
+## Load in and clean data
+
+```{r}
+
+juice <- read_csv(here::here("data/orange_juice.csv")) %>% 
+  clean_names() %>% 
+  mutate(store7 = as.factor(store7)) %>% 
+  mutate(purchase_mm = as.logical(recode(purchase,
+                              "CH" = FALSE,
+                              "MM" = TRUE)), .after = 1) %>% 
+  mutate(weekof_purchase_level = case_when(
+    weekof_purchase <= 243 ~ "low",
+    weekof_purchase > 243 & weekof_purchase < 260 ~ "medium",
+    weekof_purchase >= 260 ~ "high"), .after = 3) %>% 
+  mutate(weekof_purchase_level = factor(weekof_purchase_level, levels = c("low", "medium", "high"))) %>% 
+  select(-purchase, -weekof_purchase) %>% 
+  na.omit()
+
+view(juice)
+
+
+
+```
+
+
+## Observe potential predictors
+
+```{r}
+
+library(GGally)
+
+alias(glm(purchase_mm ~., data = juice))
+
+```
+
+* Remove aliases variables  
+
+```{r}
+juice_trim <- juice %>% 
+  select(-sale_price_ch, -sale_price_mm, -price_diff, -list_price_diff, -store )
+
+view(juice_trim)
+```
+
+
+```{r}
+ggpairs(juice_trim, c(1 : 7))
+```
+
+
+
+```{r}
+
+ggpairs(juice_trim, c(1, 8:13))
+
+```
+
+* Examine multiple predictors  
+
+```{r}
+
+juice_logreg_model <- (glm(purchase_mm ~ ., data = juice_trim, family = binomial(link = "logit")))
+
+juice_logreg_model_tidy <- broom::tidy(juice_logreg_model) %>% 
+                                       
+```
+
+```{r}
+format(8.997142e-3,scientific = FALSE)
+```
+
+The predictors below have the the significance at α=0.05, which means they are relatively relevant to the dependent variable `purchase_mm`. 
+
+`price_ch`
+`price_mm`
+`disc_mm`
+`loyal_ch`
+`pct_disc_mm`
+
+* Create models using the above predictors, and add predictions to them.
+
+```{r}
+
+library(modelr)
+
+juice_price_model <- glm(purchase_mm ~ price_ch + price_mm,     #+ disc_mm + loyal_ch + pct_disc_mm,
+                         data = juice_trim, 
+                         family = binomial(link = "logit"))
+
+juice_disc_model <-  glm(purchase_mm ~ price_ch + price_mm + disc_mm + pct_disc_mm,
+                         data = juice_trim, 
+                         family = binomial(link = "logit"))
+
+juice_5pred_model <- glm(purchase_mm ~ price_ch + price_mm + disc_mm + loyal_ch + pct_disc_mm,
+                         data = juice_trim, 
+                         family = binomial(link = "logit"))
+
+juice_price_model_ap <- juice_trim %>% 
+  add_predictions(juice_price_model, type = "response")
+
+juice_disc_model_ap <- juice_trim %>% 
+  add_predictions(juice_disc_model, type = "response")
+
+juice_5pred_model_ap <- juice_trim %>% 
+  add_predictions(juice_5pred_model, type = "response")
+
+
+juice_price_model_ap
+juice_disc_model_ap
+juice_5pred_model_ap
+
+```
+
+* create ROC
+
+```{r}
+library(pROC)
+
+roc_obj_price <- juice_price_model_ap %>% 
+  roc(response = purchase_mm, predictor = pred)
+
+roc_curve_price <- ggroc(data = roc_obj_price, legacy.axes = TRUE)+
+  coord_fixed()+
+  ylab("sensitivity (TPR)")+
+  xlab("1-specifity (TNR)")
+
+
+```
+
+
+```{r}
+
+roc_obj_disc <- juice_disc_model_ap %>% 
+  roc(response = purchase_mm, predictor = pred)
+
+roc_curve_disc <- ggroc(data = roc_obj_disc, legacy.axes = TRUE)+
+  coord_fixed()+
+  ylab("sensitivity (TPR)")+
+  xlab("1-specifity (TNR)")
+```
+
+
+```{r}
+roc_obj_5pred <- juice_5pred_model_ap %>% 
+  roc(response = purchase_mm, predictor = pred)
+
+roc_curve_5pred <- ggroc(data = roc_obj_5pred, legacy.axes = TRUE)+
+  coord_fixed()+
+  ylab("sensitivity (TPR)")+
+  xlab("1-specifity (TNR)")
+
+
+```
+
+```{r}
+
+roc_curve_price 
+roc_curve_disc
+roc_curve_5pred 
+
+```
+
+
+* Calculate the AUC
+
+```{r}
+auc(roc_obj_price)
+
+auc(roc_obj_disc)
+
+auc(roc_obj_5pred)
+
+```
+
+
+
+## Cross Validation
+
+```{r}
+library(caret)
+
+train_control <- trainControl(method = "repeatdcv",
+                              number = 5,
+                              repeats = 5000,
+                              savePredictions = TRUE,
+                              classProbs = TRUE,
+                              summaryFunction = twoClassSummary)
+
+# juice_trim_factor <- juice_trim %>% 
+#   mutate(purchase_mm = if_else(purchase_mm == TRUE ,  "1" , "0" ))
+
+train_model <- caret::train(as.factor(purchase_mm) ~ price_ch + price_mm + disc_mm + loyal_ch + pct_disc_mm,
+                     data = juice_trim,
+                     trControl = train_control,
+                     method = "glm",
+                     family = binomial(link = "logit"))
+
+summary(train_model)
+
+```
+
+
