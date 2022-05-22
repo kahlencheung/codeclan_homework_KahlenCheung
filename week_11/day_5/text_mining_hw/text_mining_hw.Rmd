@@ -1,0 +1,117 @@
+---
+title: "Text_mining_hw"
+output:
+  html_document:
+    toc: yes
+    toc_float: true
+    theme: united
+
+---
+Kahlen Cheung
+20/05/2022
+
+## Load in Data
+
+```{r}
+
+library(tidytext)
+library(tidyverse)
+library(janeaustenr)
+
+austen_books <- austen_books()
+
+austen_books
+
+```
+
+
+## Find the most common words in both Pride & Prejudice and Sense & Sensibility.
+
+The most common word in Pride & Prejudice & Sense & Sensibility is `the`, with a count of 8436, whereas without stopwords is `elinor`, with a count of 623
+
+```{r}
+
+
+titles <- c("Pride and Prejudice", "Sense and Sensibility")
+
+pride_sense_book <- list(prideprejudice, sensesensibility) %>% 
+  purrr::map_chr(paste, collapse = " ")
+
+pride_sense_book_df <- tibble(
+  title = titles,
+  text = pride_sense_book ) %>% 
+  unnest_tokens(word, text) %>% 
+  group_by(word) %>%
+  count(word) %>%
+  arrange(desc(n))
+
+pride_sense_book_df
+
+
+pride_sense_book_null <- tibble(
+  title = titles,
+  text = pride_sense_book ) %>% 
+  unnest_tokens(word, text) %>% 
+  group_by(word) %>% 
+  anti_join(stop_words) %>% 
+  count(word, sort = TRUE) %>% 
+  arrange(desc(n)) 
+
+pride_sense_book_null
+
+```
+
+```{r}
+
+# sense_book <- tibble(
+#   id = 1: length(sensesensibility),
+#   text = sensesensibility) %>% 
+#   unnest_tokens(word, text) %>% 
+#   group_by(word) %>% 
+#   count(word) %>% 
+#   arrange(desc(n)) 
+# 
+# sense_book 
+# 
+# sense_book_null <- tibble(
+#   id = 1: length(sensesensibility),
+#   text = sensesensibility) %>% 
+#   unnest_tokens(word, text) %>% 
+#   anti_join(stop_words) %>% 
+#   count(word, sort = TRUE) %>% 
+#   arrange(desc(n)) 
+# 
+# sense_book_null 
+
+```
+
+
+## Find the most common sentiment words in both Pride & Prejudice and Sense & Sensibility.
+The most common sentiment words from two books is `miss`, followed by `happy` and `love`.
+
+```{r}
+
+pride_sense_book_null %>% 
+  inner_join(get_sentiments("afinn"), by = "word") %>% 
+   left_join(get_sentiments("bing"), by = "word") %>% 
+  na.omit()
+ 
+```
+
+
+## Create a plot which visualises the differences between the books  
+
+```{r}
+
+library(ggwordcloud)
+
+set.seed(42)
+ggplot(pride_sense_book_null, aes(label = word, size = n))+
+  geom_text_wordcloud()+
+  geom_text_wordcloud_area(rm_outside = TRUE)+
+  scale_size_area(max_size = 20)+
+  theme_minimal()
+
+
+```
+
